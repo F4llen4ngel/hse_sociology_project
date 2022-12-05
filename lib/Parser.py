@@ -6,7 +6,7 @@ from time import sleep
 class Parser:
 
     def __init__(self): 
-        with open("access.token") as f:
+        with open("hse.token") as f:
             self.access_token = f.read()
         self.user_agent = UserAgent().chrome
         self.headers = {'User-Agent': self.user_agent}
@@ -17,8 +17,7 @@ class Parser:
             resp = json.loads(raw.text)["response"]
         except:
             resp = None
-            print(raw.text)
-        sleep(1)
+        sleep(0.25)
         return resp
 
     def getUserGroups(self, user_id):

@@ -1,5 +1,6 @@
 from time import sleep
 import json
+import os
 
 from lib.Parser import Parser
 
@@ -11,11 +12,25 @@ with open("groups.txt") as f:
 gids = []
 for group in groups:
     gids.append(parser.getGroupId(group))
-    sleep(1)
 
-a = dict()
+with open("group_users.txt", "r") as f:
+    d = json.loads(f.read())
+
+users = []
 for gid in gids:
-    a[gid] = parser.getGroupMembers(gid)
+    try:
+        users += d[str(gid)]
+    except:
+        pass  
+
+print(len(users))
+
+subs = dict()
+
+for i in range(len(users)):
+    subs[users[i]] = parser.getUserGroups(users[i])
+    os.system('clear')
+    print(f"[progress]: {round(i * 100 / len(users), 3)}%...")
 
 with open("users.txt", "w") as f:
-    f.write(json.dumps(a))
+    f.write(json.dumps(subs)) 
