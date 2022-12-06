@@ -29,7 +29,7 @@ subs = dict()
 
 for i in range(len(users)):
     subs[users[i]] = parser.getUserGroups(users[i])
-    os.system('clear')
+    os.system('cls')
     print(f"[progress]: {round(i * 100 / len(users), 3)}%...")
 
 with open("users.txt", "w") as f:
