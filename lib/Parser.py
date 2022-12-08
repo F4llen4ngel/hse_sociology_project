@@ -17,8 +17,8 @@ class Parser:
             resp = json.loads(raw.text)["response"]
         except:
             resp = None
-            # print(raw.text)
-        sleep(0.25)
+            print(raw.text)
+        sleep(0.33)
         return resp
 
     def getUserGroups(self, user_id):
@@ -51,4 +51,22 @@ class Parser:
         url = f"https://api.vk.com/method/groups.getById?&access_token={self.access_token}&group_id={group_id}&v=5.131"
         resp = self.request(url)
         return (resp["name"], resp["screen_name"])
-        
+
+    def chunks(self, arr):
+        for i in range(0, len(arr), 25):
+            yield arr[i:i+25]
+
+    def getGroupNames(self, groups):
+        names = dict()
+        for chunk in self.chunks(groups):
+            names |= self.executeGroupNames(chunk)
+        return names
+
+    def executeGroupNames(self, groups):
+        assert len(groups) <= 25, "can't execute more than 25 requests per procedure"
+        url = f"https://api.vk.com/method/execute.groupNames?access_token={self.access_token}&groups={','.join(list(map(str, groups)))}&v=5.131"
+        resp = self.request(url)
+        names = dict()
+        for g in resp:  
+            names[g["id"]] = (g["name"], g["screen_name"])
+        return names
