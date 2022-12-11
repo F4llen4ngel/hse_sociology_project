@@ -14,11 +14,13 @@ class Parser:
     def request(self, url):
         raw = requests.get(url, headers=self.headers)
         try:
-            resp = json.loads(raw.text)["response"]
-        except:
+            resp = json.loads(json.dumps(raw.text))[0]["response"]
+        except Exception as e:
             resp = None
-            print(raw.text)
-        sleep(0.33)
+            print(e)
+            print(type(json.loads(json.dumps(raw.text))))
+            print(raw[:100])
+        sleep(0.25)
         return resp
 
     def getUserGroups(self, user_id):
@@ -49,24 +51,57 @@ class Parser:
 
     def getGroupName(self, group_id):
         url = f"https://api.vk.com/method/groups.getById?&access_token={self.access_token}&group_id={group_id}&v=5.131"
-        resp = self.request(url)
+        resp = self.request(url)[0]
+        if resp is None:
+            return ("", "")
         return (resp["name"], resp["screen_name"])
 
+
     def chunks(self, arr):
-        for i in range(0, len(arr), 25):
-            yield arr[i:i+25]
-
-    def getGroupNames(self, groups):
-        names = dict()
-        for chunk in self.chunks(groups):
-            names |= self.executeGroupNames(chunk)
-        return names
-
-    def executeGroupNames(self, groups):
-        assert len(groups) <= 25, "can't execute more than 25 requests per procedure"
-        url = f"https://api.vk.com/method/execute.groupNames?access_token={self.access_token}&groups={','.join(list(map(str, groups)))}&v=5.131"
+        for i in range(0, len(arr), 1000):
+            yield arr[i:i+1000]
+    
+    def getGroupNamesChunk(self, group_ids):
+        group_ids = ", ".join(list(map(str, group_ids)))
+        url = f"https://api.vk.com/method/groups.getById?&access_token={self.access_token}&group_ids={group_ids}&v=5.131"
         resp = self.request(url)
         names = dict()
-        for g in resp:  
+        for g in resp:
             names[g["id"]] = (g["name"], g["screen_name"])
         return names
+
+    def getGroupNames(self, group_ids):
+        names = dict()
+        for chunk in self.chunks(group_ids):
+            names |= self.getGroupNamesChunk(chunk)
+        return names
+        
+
+    # def getGroupNames(self, groups):
+    #     names = dict()
+    #     for chunk in self.chunks(groups):
+    #         names |= self.executeGroupNames(chunk)
+    #     return names
+
+    # def executeGroupNames(self, groups):
+    #     assert len(groups) <= 25, "can't execute more than 25 requests per procedure"
+    #     url = f"https://api.vk.com/method/execute.groupNames?access_token={self.access_token}&groups={','.join(list(map(str, groups)))}&v=5.131"
+    #     resp = self.request(url)
+    #     names = dict()
+    #     for g in resp:  
+    #         names[g["id"]] = (g["name"], g["screen_name"])
+    #     return names
+
+    def isRight(self, group_name):
+        d = ("z", "патриот", "путин", "родина", "нац")
+        for i in d:
+            if i in group_name.lower():
+                return True
+        return False
+
+    def checkRight(self, group_list):
+        cnt = 0
+        for group in group_list:
+            if self.isRight(group):
+                return True
+        return False
